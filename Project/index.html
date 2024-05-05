@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 400px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            background-color: #f4f4f4;
+        }
+
+        .chat-input input[type="text"] {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+
+        .chat-input button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .chat-input button:hover {
+            background-color: #0056b3;
+        }
+
+        .message {
+            margin-bottom: 10px;
+        }
+
+        .user-message {
+            background-color: #007bff;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 10px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        .bot-message {
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 8px 12px;
+            border-radius: 10px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped table-hover datatable">
+                <thead>
+                    <tr>
+                        <th>Video URL</th>
+                        <th>Transcript</th>
+                        <th>Channel</th>
+                        <th>Publication Date</th>
+                        <th>Category</th>
+                    </tr>
+                </thead>
+                <tbody id="video-details">
+                  
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div>
+        <h2>Summarize Response:</h2>
+        <p id="summarize-response"></p>
+    </div>
+
+    <div>
+        <h2>Chat Response:</h2>
+        <div id="chat-response"></div>
+        <div class="chat-input">
+            <input type="text" id="user-input" placeholder="Type your message...">
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const summarizeResponse = document.getElementById('summarize-response');
+        const chatResponse = document.getElementById('chat-response');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const chatMessages = document.getElementById('chat-messages');
+        const videoDetails = document.getElementById('video-details');
+
+        // Function to add user message to chat
+        function addUserMessage(message) {
+            const userMessage = document.createElement('div');
+            userMessage.classList.add('message', 'user-message');
+            userMessage.textContent = message;
+            chatMessages.appendChild(userMessage);
+        }
+
+        // Function to add bot message to chat
+        function addBotMessage(message) {
+            const botMessage = document.createElement('div');
+            botMessage.classList.add('message', 'bot-message');
+            botMessage.textContent = message;
+            chatMessages.appendChild(botMessage);
+        }
+        // Function to make AJAX request to /summarize endpoint
+        function fetchSummarizeResponse() {
+            fetch('/fetch_videos')
+                .then(response => response.json())
+                .then(data => {
+            const videoDetailsHTML = `
+                <tr>
+                    <td>${data.video.video_url}</td>
+                    <td>${data.video.transcript}</td>
+                    <td>${data.video.channel}</td>
+                    <td>${data.video.publication_date}</td>
+                    <td>${data.video.category}</td>
+                </tr>
+            `;})
+                .catch(error => console.error('Error:', error));
+        }
+        setTimeout(() => {
+            addBotMessage("Welcome to the chat! How can I assist you today?");
+        }, 1000);
+        // Function to make AJAX request to /chat endpoint
+        function fetchChatResponse(query) {
+            fetch(`/chat?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    chatResponse.textContent = `BOT : ${data.response}`;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Event listener for send button click
+        sendBtn.addEventListener('click', () => {
+            const message = userInput.value.trim();
+            if (message !== '') {
+                addUserMessage(message);
+                userInput.value = '';
+
+                // Call fetchChatResponse with user input
+                fetchChatResponse(message);
+            }
+        });
+
+        // Call fetchSummarizeResponse when the page loads
+        window.onload = () => {
+            fetchSummarizeResponse();
+        };
+    </script>
+</body>
+</html>
